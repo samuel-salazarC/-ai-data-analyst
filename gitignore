@@ -1,0 +1,27 @@
+# Environment
+.env
+*.env
+GEMINI_API_KEY
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.venv/
+
+# Generated outputs
+report_output.md
+
+# Data files
+data/*.csv
+*.csv
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+~$*
