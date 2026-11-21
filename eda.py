@@ -1,5 +1,13 @@
-import pandas as pd
+import os
+
 import numpy as np
+import pandas as pd
+
+# Name fragments that usually identify a binary target column
+TARGET_KEYWORDS = [
+    "label", "target", "class", "attack", "intrusion", "fraud", "churn",
+    "outcome", "potab", "survived", "default",
+]
 
 
 def run_eda(filepath: str) -> dict:
@@ -9,19 +17,24 @@ def run_eda(filepath: str) -> dict:
     """
     df = pd.read_csv(filepath)
 
+    # Drop index columns saved by mistake (e.g. "Unnamed: 0")
+    df = df.loc[:, ~df.columns.astype(str).str.startswith("Unnamed:")]
+
     print(f"📊 Dataset shape: {df.shape[0]} rows × {df.shape[1]} columns")
 
     summary = {}
 
     # --- Basic Info ---
-    summary["dataset_name"] = filepath.split("/")[-1]
+    summary["dataset_name"] = os.path.basename(filepath)
     summary["rows"] = df.shape[0]
     summary["columns"] = df.shape[1]
     summary["column_names"] = list(df.columns)
 
     # --- Data Types ---
     numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
-    categorical_cols = df.select_dtypes(include=["object", "category"]).columns.tolist()
+    # Everything that is not numeric, boolean or a date is treated as categorical.
+    # This works with both the object dtype (pandas 2) and the str dtype (pandas 3).
+    categorical_cols = df.select_dtypes(exclude=[np.number, "bool", "datetime"]).columns.tolist()
     summary["numeric_columns"] = numeric_cols
     summary["categorical_columns"] = categorical_cols
 
@@ -58,6 +71,8 @@ def run_eda(filepath: str) -> dict:
         cat_summary = {}
         for col in categorical_cols:
             value_counts = df[col].value_counts()
+            if value_counts.empty:
+                continue
             cat_summary[col] = {
                 "unique_values": int(df[col].nunique()),
                 "top_value": str(value_counts.index[0]),
@@ -78,13 +93,14 @@ def run_eda(filepath: str) -> dict:
                     high_corr.append({
                         "col1": corr_matrix.columns[i],
                         "col2": corr_matrix.columns[j],
-                        "correlation": round(val, 3)
+                        "correlation": round(float(val), 3)
                     })
         summary["high_correlations"] = high_corr if high_corr else "No strong correlations found (threshold > 0.7)"
 
     # --- Class balance (if binary/low cardinality target detected) ---
     for col in df.columns:
-        if df[col].nunique() == 2 and col.lower() in ["label", "target", "class", "attack", "intrusion", "fraud", "churn"]:
+        is_target_name = any(keyword in col.lower() for keyword in TARGET_KEYWORDS)
+        if df[col].nunique() == 2 and is_target_name:
             balance = df[col].value_counts(normalize=True).round(3).to_dict()
             summary["target_column"] = col
             summary["class_balance"] = balance

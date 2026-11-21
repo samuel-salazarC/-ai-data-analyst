@@ -1,10 +1,12 @@
 import os
 import json
 import copy
-from google import genai
+
+# Override with the GEMINI_MODEL environment variable or the --model option
+DEFAULT_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
 
 
-def generate_report(eda_summary: dict) -> str:
+def generate_report(eda_summary: dict, model: str = DEFAULT_MODEL) -> str:
     """
     Sends EDA summary to Gemini API and returns a professional
     narrative report with business insights.
@@ -16,6 +18,8 @@ def generate_report(eda_summary: dict) -> str:
             "Get your free key at: https://aistudio.google.com/app/apikey\n"
             "Then run: export GEMINI_API_KEY='your_key_here'"
         )
+
+    from google import genai  # imported here so --eda-only works without the SDK
 
     client = genai.Client(api_key=api_key)
 
@@ -68,7 +72,9 @@ Generate the full report now:
 """
 
     response = client.models.generate_content(
-        model="gemini-2.0-flash-lite",
+        model=model,
         contents=prompt
     )
+    if not response.text:
+        raise RuntimeError("Gemini returned an empty response.")
     return response.text
