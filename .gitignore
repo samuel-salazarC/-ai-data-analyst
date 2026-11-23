@@ -1,27 +1,20 @@
-# Environment
+# Environment and secrets
 .env
 *.env
-GEMINI_API_KEY
 
 # Python
 __pycache__/
-*.pyc
-*.pyo
+*.py[cod]
 venv/
 .venv/
 
 # Generated outputs
 report_output.md
+eda_summary.json
 
-# Data files
-data/*.csv
-*.csv
-
-# IDE
+# IDE and OS
 .vscode/
 .idea/
-
-# OS
 .DS_Store
 Thumbs.db
 ~$*
