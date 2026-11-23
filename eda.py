@@ -20,7 +20,7 @@ def run_eda(filepath: str) -> dict:
     # Drop index columns saved by mistake (e.g. "Unnamed: 0")
     df = df.loc[:, ~df.columns.astype(str).str.startswith("Unnamed:")]
 
-    print(f"📊 Dataset shape: {df.shape[0]} rows × {df.shape[1]} columns")
+    print(f"Dataset shape: {df.shape[0]} rows × {df.shape[1]} columns")
 
     summary = {}
 
@@ -43,12 +43,12 @@ def run_eda(filepath: str) -> dict:
     missing_pct = (missing / len(df) * 100).round(2)
     missing_info = {col: f"{missing[col]} ({missing_pct[col]}%)" for col in df.columns if missing[col] > 0}
     summary["missing_values"] = missing_info if missing_info else "No missing values found"
-    print(f"🔎 Missing values: {len(missing_info)} columns affected" if missing_info else "✅ No missing values")
+    print(f"Missing values: {len(missing_info)} columns affected" if missing_info else "Missing values: none")
 
     # --- Duplicates ---
     duplicates = df.duplicated().sum()
     summary["duplicate_rows"] = int(duplicates)
-    print(f"🔎 Duplicate rows: {duplicates}")
+    print(f"Duplicate rows: {duplicates}")
 
     # --- Numeric Stats ---
     if numeric_cols:
@@ -104,8 +104,8 @@ def run_eda(filepath: str) -> dict:
             balance = df[col].value_counts(normalize=True).round(3).to_dict()
             summary["target_column"] = col
             summary["class_balance"] = balance
-            print(f"🎯 Target column detected: '{col}' — Balance: {balance}")
+            print(f"Target column detected: '{col}' — Balance: {balance}")
             break
 
-    print("✅ EDA complete")
+    print("EDA complete")
     return summary

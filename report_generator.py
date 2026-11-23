@@ -19,7 +19,7 @@ def generate_report(eda_summary: dict, model: str = DEFAULT_MODEL) -> str:
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
         raise EnvironmentError(
-            "❌ GEMINI_API_KEY not set.\n"
+            "Error: GEMINI_API_KEY not set.\n"
             "Get your free key at: https://aistudio.google.com/app/apikey\n"
             "Then run: export GEMINI_API_KEY='your_key_here'"
         )
@@ -90,7 +90,7 @@ Generate the full report now:
                 raise
             delay = RETRY_DELAYS_SECONDS[attempt]
             print(
-                f"⏳ Gemini returned {error.code} {error.status}. "
+                f"Gemini returned {error.code} {error.status}. "
                 f"Retrying in {delay}s ({attempt + 1}/{len(RETRY_DELAYS_SECONDS)})..."
             )
             time.sleep(delay)
