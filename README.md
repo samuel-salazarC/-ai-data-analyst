@@ -1,126 +1,98 @@
-# AI Data Analyst — Automated EDA Report Generator
+# AI Data Analyst
 
-A Python tool that performs **Exploratory Data Analysis (EDA)** on any CSV dataset and uses **Google Gemini AI** to generate a professional, narrative business intelligence report automatically.
+Automated exploratory data analysis (EDA) for any CSV file, with a narrative report written by Google Gemini.
 
----
+The tool profiles a dataset (structure, data quality, statistics, correlations and class balance) and sends that summary to the Gemini API, which returns a business-oriented report in Markdown.
 
-## 🎯 What it does
+## How it works
 
-1. Loads any CSV dataset
-2. Automatically analyzes: shape, types, missing values, duplicates, outliers, correlations, class balance
-3. Sends the structured summary to **Google Gemini** (`gemini-3.5-flash-lite` by default)
-4. Receives a professional Markdown report with business insights and recommendations
-5. Saves the report as `report_output.md`
+1. Loads a CSV file with pandas.
+2. Computes an EDA summary: shape, data types, missing values, duplicate rows, outliers (IQR method), descriptive statistics, categorical frequencies, strong correlations and, when a binary target column is detected, its class balance.
+3. Sends the summary to Gemini (`gemini-3.5-flash-lite` by default).
+4. Saves the generated report as `report_output.md`.
 
----
+A sample report is available in [`examples/netflix_report.md`](examples/netflix_report.md).
 
-## 🧠 Why this matters
-
-Manual EDA is repetitive. This tool accelerates the first step of any data project — turning raw data into actionable narratives in seconds. Ideal for business analysts, data engineers, and BI teams who need fast, documented insights.
-
----
-
-## 🛠️ Tech Stack
+## Tech stack
 
 | Tool | Purpose |
 |------|---------|
 | Python 3.10+ | Core language |
-| pandas | Data loading and analysis |
-| numpy | Numeric operations |
-| Google Gemini API (`google-genai` SDK) | AI report generation |
+| pandas, NumPy | Data loading and analysis |
+| Google Gemini API (`google-genai` SDK) | Report generation |
 
----
+## Setup
 
-## ⚙️ Setup
+1. Clone the repository.
 
-### 1. Clone the repository
+   ```bash
+   git clone https://github.com/samuel-salazarC/ai-data-analyst.git
+   cd ai-data-analyst
+   ```
 
-```bash
-git clone https://github.com/samuel-salazarC/ai-data-analyst.git
-cd ai-data-analyst
-```
+2. Create a virtual environment and install the dependencies.
 
-### 2. Install dependencies
+   ```bash
+   python -m venv .venv
+   source .venv/bin/activate        # Windows: .venv\Scripts\activate
+   pip install -r requirements.txt
+   ```
 
-```bash
-pip install -r requirements.txt
-```
+3. Create a Gemini API key at [Google AI Studio](https://aistudio.google.com/app/apikey) and set it as an environment variable.
 
-### 3. Get your free Gemini API key
+   ```bash
+   export GEMINI_API_KEY="your_api_key_here"      # macOS / Linux
+   set GEMINI_API_KEY=your_api_key_here           # Windows (cmd)
+   ```
 
-1. Go to [https://aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey)
-2. Sign in with your Google account
-3. Click **"Create API Key"**
-4. Copy the key
-
-### 4. Set your API key as environment variable
-
-```bash
-export GEMINI_API_KEY="your_api_key_here"
-```
-
-On Windows:
-```cmd
-set GEMINI_API_KEY=your_api_key_here
-```
-
----
-
-## 🚀 Usage
+## Usage
 
 ```bash
-# With the default dataset (data/netflix_titles.csv)
+# Default dataset (data/netflix_titles.csv)
 python main.py
 
-# With your own dataset
+# Your own dataset
 python main.py path/to/your/data.csv
 
-# Choose the output file or the Gemini model
+# Custom output file and model
 python main.py data/potabilidad_V2.csv -o water_report.md --model gemini-3.5-flash-lite
 
-# Run only the EDA and save it as eda_summary.json (no API key needed)
+# EDA only: saves eda_summary.json and does not need an API key
 python main.py --eda-only
 ```
 
-The model can also be set with the `GEMINI_MODEL` environment variable. Google retires older Gemini models periodically; if the default stops working, pick a current one from the [Gemini models page](https://ai.google.dev/gemini-api/docs/models).
+| Option | Description |
+|--------|-------------|
+| `dataset` | Path to the CSV file. Defaults to `data/netflix_titles.csv`. |
+| `-o`, `--output` | Path of the generated report. Defaults to `report_output.md`. |
+| `--model` | Gemini model to use. Can also be set with the `GEMINI_MODEL` environment variable. |
+| `--eda-only` | Skips the Gemini call and saves the EDA summary as JSON. |
 
-### Example output
+Example run:
 
 ```
-🔍 Loading dataset: data/potabilidad_V2.csv
+Loading dataset: data/potabilidad_V2.csv
 ============================================================
-📊 Dataset shape: 2011 rows × 10 columns
-✅ No missing values
-🔎 Duplicate rows: 0
-🎯 Target column detected: 'Potability' — Balance: {'No': 0.597, 'Si': 0.403}
-✅ EDA complete
+Dataset shape: 2011 rows × 10 columns
+Missing values: none
+Duplicate rows: 0
+Target column detected: 'Potability' — Balance: {'No': 0.597, 'Si': 0.403}
+EDA complete
 
-🤖 Generating AI-powered report with Gemini (gemini-3.5-flash-lite)...
+Generating AI-powered report with Gemini (gemini-3.5-flash-lite)...
 
-✅ Report saved to: report_output.md
+Report saved to: report_output.md
 ```
 
-A full sample report is available in [`examples/netflix_report.md`](examples/netflix_report.md).
+The generated report contains an executive summary, a dataset overview, a data quality assessment, key statistical findings, categorical insights, a correlation analysis, business recommendations and suggested next steps.
 
-The generated report includes:
-- Executive Summary
-- Dataset Overview
-- Data Quality Assessment
-- Key Statistical Findings
-- Categorical Insights
-- Correlation Analysis
-- Business Insights & Recommendations
-- Suggested Next Steps
-
----
-
-## 📁 Project Structure
+## Project structure
 
 ```
 ai-data-analyst/
-├── main.py                  # Entry point: command-line options, EDA + report generation
-├── eda.py                   # EDA module: analyzes the dataset automatically
-├── report_generator.py      # Gemini API integration: generates the narrative report
+├── main.py                  # Entry point and command-line options
+├── eda.py                   # Automatic EDA
+├── report_generator.py      # Gemini API integration
 ├── requirements.txt         # Python dependencies
 ├── data/
 │   ├── netflix_titles.csv   # Sample dataset (Netflix catalog)
@@ -129,26 +101,13 @@ ai-data-analyst/
     └── netflix_report.md    # Sample report generated by the tool
 ```
 
----
+## Notes and limitations
 
-## 🔒 Security
+- The API key is read from the `GEMINI_API_KEY` environment variable and is never stored in the repository.
+- Requests to Gemini time out after 60 seconds and are retried up to three times when the service is saturated (HTTP 429 or 503).
+- Google retires Gemini models periodically. If the default model stops working, choose a current one from the [Gemini models page](https://ai.google.dev/gemini-api/docs/models) and pass it with `--model`.
+- The report is written by a language model from summary statistics. Review its conclusions before relying on them.
 
-- API key is loaded from environment variables — **never hardcoded**
-- No sensitive data is committed to the repository
-- `.gitignore` excludes generated outputs and `.env` files
+## Author
 
----
-
-## 📌 Use Cases
-
-- Rapid dataset profiling for BI teams
-- First-pass analysis before building ML models
-- Automated documentation of data quality
-- Onboarding new datasets in data pipelines
-
----
-
-## 👤 Author
-
-**Samuel Salazar** — Data Science Engineering Student  
-[GitHub](https://github.com/samuel-salazarC)
+Samuel Salazar, Data Science Engineering student. [GitHub profile](https://github.com/samuel-salazarC)
