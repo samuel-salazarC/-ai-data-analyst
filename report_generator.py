@@ -1,9 +1,14 @@
 import os
 import json
 import copy
+import time
 
 # Override with the GEMINI_MODEL environment variable or the --model option
 DEFAULT_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
+
+REQUEST_TIMEOUT_MS = 60_000  # google-genai expects milliseconds
+RETRY_DELAYS_SECONDS = (5, 15, 30)  # waits before each retry
+RETRYABLE_STATUS_CODES = {429, 503}
 
 
 def generate_report(eda_summary: dict, model: str = DEFAULT_MODEL) -> str:
@@ -21,7 +26,12 @@ def generate_report(eda_summary: dict, model: str = DEFAULT_MODEL) -> str:
 
     from google import genai  # imported here so --eda-only works without the SDK
 
-    client = genai.Client(api_key=api_key)
+    from google.genai import errors, types
+
+    client = genai.Client(
+        api_key=api_key,
+        http_options=types.HttpOptions(timeout=REQUEST_TIMEOUT_MS),
+    )
 
     # Reduce summary size to stay within free tier token limits
     light_summary = copy.deepcopy(eda_summary)
@@ -71,10 +81,20 @@ Your task is to generate a clear, insightful, and professional report in Markdow
 Generate the full report now:
 """
 
-    response = client.models.generate_content(
-        model=model,
-        contents=prompt
-    )
+    for attempt in range(len(RETRY_DELAYS_SECONDS) + 1):
+        try:
+            response = client.models.generate_content(model=model, contents=prompt)
+            break
+        except errors.APIError as error:
+            if error.code not in RETRYABLE_STATUS_CODES or attempt == len(RETRY_DELAYS_SECONDS):
+                raise
+            delay = RETRY_DELAYS_SECONDS[attempt]
+            print(
+                f"⏳ Gemini returned {error.code} {error.status}. "
+                f"Retrying in {delay}s ({attempt + 1}/{len(RETRY_DELAYS_SECONDS)})..."
+            )
+            time.sleep(delay)
+
     if not response.text:
         raise RuntimeError("Gemini returned an empty response.")
     return response.text
